@@ -11,13 +11,18 @@ function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+const priceFormat = new Intl.NumberFormat("es-BO", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 function showMessage(text, isError) {
   const msg = document.getElementById("msg");
   msg.textContent = text;
   msg.className = isError ? "message message--error" : "message";
   msg.hidden = false;
   clearTimeout(showMessage.timer);
-  showMessage.timer = setTimeout(() => { msg.hidden = true; }, 4000);
+  if (!isError) showMessage.timer = setTimeout(() => { msg.hidden = true; }, 4000);
 }
 
 // ---------- pestañas ----------
@@ -55,7 +60,7 @@ async function loadRooms() {
     }
     // también llena el select del formulario de reservas
     document.getElementById("reservation-room").innerHTML = rooms
-      .map((r) => `<option value="${r.id}">${esc(r.number)} · ${esc(ROOM_TYPES[r.type])} · Bs ${esc(r.price_per_night)}</option>`)
+      .map((r) => `<option value="${esc(r.id)}">${esc(r.number)} · ${esc(ROOM_TYPES[r.type])} · Bs ${esc(r.price_per_night)}</option>`)
       .join("");
   } catch (error) {
     showMessage(error.message, true);
@@ -106,7 +111,7 @@ async function loadGuests() {
         </tr>`).join("");
     }
     document.getElementById("reservation-guest").innerHTML = guests
-      .map((g) => `<option value="${g.id}">${esc(g.full_name)}</option>`)
+      .map((g) => `<option value="${esc(g.id)}">${esc(g.full_name)}</option>`)
       .join("");
   } catch (error) {
     showMessage(error.message, true);
@@ -145,14 +150,14 @@ async function loadReservations() {
     }
     body.innerHTML = reservations.map((r) => `
       <tr>
-        <td class="table__cell">${r.id}</td>
+        <td class="table__cell">${esc(r.id)}</td>
         <td class="table__cell">${esc(r.room_number)}</td>
         <td class="table__cell">${esc(r.guest_name)}</td>
         <td class="table__cell">${esc(r.check_in)}</td>
         <td class="table__cell">${esc(r.check_out)}</td>
         <td class="table__cell">${esc(r.nights)}</td>
         <td class="table__cell">${esc(r.guests_count)}</td>
-        <td class="table__cell">${esc(r.total_price)}</td>
+        <td class="table__cell">${priceFormat.format(r.total_price)}</td>
         <td class="table__cell"><span class="badge badge--${esc(r.status).replaceAll("_", "-")}">${esc(STATUS_LABELS[r.status])}</span></td>
         <td class="table__cell">
           <button class="table__action button button--small button--success" data-action="check-in" data-id="${esc(r.id)}">Check-in</button>
@@ -178,14 +183,14 @@ document.getElementById("reservation-form").addEventListener("submit", (event) =
 
     const body = await api.createReservation(data);
     form.reset();
-    showMessage("Reserva #" + body.id + " creada · total Bs " + body.total_price);
+    showMessage("Reserva #" + body.id + " creada · total Bs " + priceFormat.format(body.total_price));
     loadReservations();
   });
 });
 
 async function changeReservation(id, operation) {
   const body = await operation(id);
-  showMessage("Reserva #" + id + ": " + STATUS_LABELS[body.status]);
+  showMessage("Reserva #" + id + ": " + STATUS_LABELS[body.status] + " · total Bs " + priceFormat.format(body.total_price));
   await loadReservations();
 }
 
