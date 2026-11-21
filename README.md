@@ -45,6 +45,8 @@ docker compose exec backend pytest -q
 
 Las dependencias van de los controladores a los servicios, de ahí a los repositorios y finalmente a los modelos.
 
+Consulta [REGLAS.md](REGLAS.md) para ver las reglas de reservas y sus respuestas.
+
 ## API
 
 | Método | Ruta | Descripción |

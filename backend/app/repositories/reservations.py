@@ -42,6 +42,13 @@ def has_overlap(room_id, check_in, check_out, statuses):
     ).first() is not None
 
 
+def count_by_guest_and_status(guest_id, statuses):
+    return Reservation.query.filter(
+        Reservation.guest_id == guest_id,
+        Reservation.status.in_(statuses),
+    ).count()
+
+
 def create(**fields):
     reservation = Reservation(**fields)
     db.session.add(reservation)

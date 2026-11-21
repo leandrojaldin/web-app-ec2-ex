@@ -9,6 +9,7 @@ from .rooms import get_room
 
 HOTEL_TIMEZONE = timezone(timedelta(hours=-4))
 ACTIVE_STATUSES = ("confirmed", "checked_in")
+MAX_ACTIVE_RESERVATIONS = 3
 MIN_DISCOUNT_NIGHTS = 7
 LONG_STAY_DISCOUNT = Decimal("0.10")
 
@@ -71,6 +72,8 @@ def create_reservation(data):
             raise BusinessRuleError("La habitación está en mantenimiento")
         if reservations.has_overlap(room_id, check_in, check_out, ACTIVE_STATUSES):
             raise BusinessRuleError("La habitación ya está reservada en esas fechas")
+        if reservations.count_by_guest_and_status(guest_id, ACTIVE_STATUSES) >= MAX_ACTIVE_RESERVATIONS:
+            raise BusinessRuleError(f"El huésped ya tiene {MAX_ACTIVE_RESERVATIONS} reservas activas")
 
         nights = (check_out - check_in).days
         return reservations.create(
@@ -80,19 +83,29 @@ def create_reservation(data):
         )
 
 
+def _require_state(reservation, expected_status):
+    if reservation.status != expected_status:
+        raise BusinessRuleError("No se permite esta acción para el estado de la reserva")
+
+
 def cancel_reservation(reservation_id):
-    reservation = get_reservation(reservation_id)
     with reservations.transaction():
+        reservation = get_reservation(reservation_id)
+        _require_state(reservation, "confirmed")
         return reservations.update(reservation, status="cancelled")
 
 
 def check_in_reservation(reservation_id):
-    reservation = get_reservation(reservation_id)
     with reservations.transaction():
+        reservation = get_reservation(reservation_id)
+        _require_state(reservation, "confirmed")
+        if hotel_now().date() < reservation.check_in:
+            raise BusinessRuleError("El check-in no puede realizarse antes de la fecha de ingreso")
         return reservations.update(reservation, status="checked_in")
 
 
 def check_out_reservation(reservation_id):
-    reservation = get_reservation(reservation_id)
     with reservations.transaction():
+        reservation = get_reservation(reservation_id)
+        _require_state(reservation, "checked_in")
         return reservations.update(reservation, status="checked_out")

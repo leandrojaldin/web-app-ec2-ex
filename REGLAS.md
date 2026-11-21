@@ -11,13 +11,13 @@ Las solicitudes que violan una regla devuelven HTTP 422 con el cuerpo JSON indic
 | Mantenimiento | Al crear una reserva, se rechaza una habitación en estado `maintenance`. | `{"error":"La habitación está en mantenimiento"}`. |
 | Descuento por estadía larga | Al crear una reserva de siete noches o más, se descuenta el 10 % sobre el precio por noche multiplicado por el número de noches. | Sin error. El HTTP 201 incluye el importe final en `total_price`. |
 
-Reglas adicionales identificadas en el relato de Lucía:
+Reglas adicionales del relato de Lucía. La penalización por cancelación queda pendiente.
 
-| Regla | Condición | Respuesta prevista |
+| Regla | Condición | Respuesta |
 | --- | --- | --- |
-| Penalización por cancelación | Al cancelar, si quedan menos de 48 horas para la fecha de ingreso, se cobra la primera noche. Si quedan 48 horas o más, no hay cargo. | Sin error. El HTTP 200 incluye la penalidad o cero en `total_price`. |
+| Penalización por cancelación (pendiente) | Al cancelar, si quedan menos de 48 horas para la fecha de ingreso, se cobra la primera noche. Si quedan 48 horas o más, no hay cargo. | Sin error. El HTTP 200 incluye la penalidad o cero en `total_price`. |
 | Transiciones de estado | Una reserva confirmada se puede cancelar o pasar a hospedada. Una reserva hospedada puede pasar a finalizada. Cancelada y finalizada son estados terminales. | HTTP 422 con `{"error":"No se permite esta acción para el estado de la reserva"}`. |
 | Check-in anticipado | Al registrar un ingreso, la fecha actual debe ser igual o posterior a la fecha de ingreso de la reserva. | HTTP 422 con `{"error":"El check-in no puede realizarse antes de la fecha de ingreso"}`. |
-| Límite por huésped | Al crear una reserva, el huésped debe tener menos de tres reservas activas, contando las confirmadas y las que tienen check-in. | HTTP 422 con `{"error":"El huésped ya tiene tres reservas activas"}`. |
+| Límite por huésped | Al crear una reserva, el huésped debe tener menos de tres reservas activas, contando las confirmadas y las que tienen check-in. | HTTP 422 con `{"error":"El huésped ya tiene 3 reservas activas"}`. |
 
 Los errores de formato o campos obligatorios conservan HTTP 400. Los registros inexistentes y duplicados conservan sus códigos HTTP 404 y 409, respectivamente.
