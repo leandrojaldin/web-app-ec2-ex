@@ -6,6 +6,7 @@ from .models import db
 from .controllers.room_controller import room_bp
 from .controllers.guest_controller import guest_bp
 from .controllers.reservation_controller import reservation_bp
+from .controllers.errors import register_service_errors
 from .seed import seed
 
 
@@ -16,6 +17,7 @@ def create_app(overrides=None):
         app.config.update(overrides)
 
     CORS(app)
+    register_service_errors(app)
     db.init_app(app)
 
     app.register_blueprint(room_bp)

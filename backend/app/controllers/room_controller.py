@@ -1,99 +1,35 @@
+
 from flask import Blueprint, jsonify, request
 
-from ..models import Room, db
+from ..services import rooms
 from ..views.room_view import room_to_dict, rooms_to_list
 
 room_bp = Blueprint("rooms", __name__, url_prefix="/api/rooms")
 
-ROOM_TYPES = ("single", "double", "family", "suite")
-ROOM_STATUSES = ("available", "maintenance")
-
 
 @room_bp.get("")
 def list_rooms():
-    query = Room.query
-    status = request.args.get("status")
-    if status:
-        query = query.filter_by(status=status)
-    rooms = query.order_by(Room.number).all()
-    return jsonify(rooms_to_list(rooms))
+    return jsonify(rooms_to_list(rooms.list_rooms(request.args.get("status"))))
 
 
 @room_bp.get("/<int:room_id>")
 def get_room(room_id):
-    room = db.session.get(Room, room_id)
-    if room is None:
-        return jsonify({"error": "Habitación no encontrada"}), 404
-    return jsonify(room_to_dict(room))
+    return jsonify(room_to_dict(rooms.get_room(room_id)))
 
 
 @room_bp.post("")
 def create_room():
-    data = request.get_json(silent=True) or {}
-
-    missing = [f for f in ("number", "type", "price_per_night", "capacity") if data.get(f) in (None, "")]
-    if missing:
-        return jsonify({"error": f"Faltan campos: {', '.join(missing)}"}), 400
-    if data["type"] not in ROOM_TYPES:
-        return jsonify({"error": f"Tipo inválido. Usa: {', '.join(ROOM_TYPES)}"}), 400
-
-    try:
-        price = float(data["price_per_night"])
-        capacity = int(data["capacity"])
-    except (TypeError, ValueError):
-        return jsonify({"error": "price_per_night y capacity deben ser números"}), 400
-
-    number = str(data["number"]).strip()
-    if Room.query.filter_by(number=number).first():
-        return jsonify({"error": "Ya existe una habitación con ese número"}), 409
-
-    room = Room(
-        number=number,
-        type=data["type"],
-        price_per_night=price,
-        capacity=capacity,
-        status=data.get("status", "available"),
-    )
-    db.session.add(room)
-    db.session.commit()
+    room = rooms.create_room(request.get_json(silent=True) or {})
     return jsonify(room_to_dict(room)), 201
 
 
 @room_bp.put("/<int:room_id>")
 def update_room(room_id):
-    room = db.session.get(Room, room_id)
-    if room is None:
-        return jsonify({"error": "Habitación no encontrada"}), 404
-
-    data = request.get_json(silent=True) or {}
-    if "type" in data:
-        if data["type"] not in ROOM_TYPES:
-            return jsonify({"error": f"Tipo inválido. Usa: {', '.join(ROOM_TYPES)}"}), 400
-        room.type = data["type"]
-    if "status" in data:
-        if data["status"] not in ROOM_STATUSES:
-            return jsonify({"error": f"Estado inválido. Usa: {', '.join(ROOM_STATUSES)}"}), 400
-        room.status = data["status"]
-    try:
-        if "price_per_night" in data:
-            room.price_per_night = float(data["price_per_night"])
-        if "capacity" in data:
-            room.capacity = int(data["capacity"])
-    except (TypeError, ValueError):
-        return jsonify({"error": "price_per_night y capacity deben ser números"}), 400
-
-    db.session.commit()
+    room = rooms.update_room(room_id, request.get_json(silent=True) or {})
     return jsonify(room_to_dict(room))
 
 
 @room_bp.delete("/<int:room_id>")
 def delete_room(room_id):
-    room = db.session.get(Room, room_id)
-    if room is None:
-        return jsonify({"error": "Habitación no encontrada"}), 404
-    if room.reservations:
-        return jsonify({"error": "La habitación tiene reservas registradas"}), 409
-
-    db.session.delete(room)
-    db.session.commit()
+    rooms.delete_room(room_id)
     return "", 204

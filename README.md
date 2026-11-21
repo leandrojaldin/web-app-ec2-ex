@@ -2,7 +2,7 @@
 
 Sistema de recepción de un hotel: habitaciones, huéspedes y reservas.
 
-- `backend/`: API REST en Flask con arquitectura **MVC** (models, views, controllers) y SQLite.
+- `backend/`: API REST en Flask con arquitectura por capas (models, views, controllers) y SQLite.
 - `frontend/`: HTML, CSS y JavaScript sin frameworks.
 
 Todo corre con Docker Compose: el backend usa el servidor de desarrollo de Flask y el frontend el servidor estático de Python. No hay nginx ni gunicorn.
@@ -35,24 +35,17 @@ El código de las dos carpetas está montado en los contenedores: al guardar un 
 docker compose exec backend pytest -q
 ```
 
-## Estructura (MVC)
+## Arquitectura del backend
 
-```
-backend/
-├── run.py                     punto de entrada (flask --app run:app)
-├── app/
-│   ├── __init__.py            create_app: config, CORS, blueprints, seed
-│   ├── config.py
-│   ├── seed.py                datos de ejemplo
-│   ├── models/                M: tablas con Flask-SQLAlchemy
-│   ├── views/                 V: cómo se presenta cada modelo en JSON
-│   └── controllers/           C: blueprints con las rutas
-└── tests/
-frontend/
-├── index.html
-├── style.css
-└── app.js
-```
+- `controllers/` recibe las peticiones y usa `views/` para construir el JSON.
+- `services/` ejecuta casos de uso y valida las reglas de negocio.
+- `repositories/` consulta y guarda datos con SQLAlchemy.
+- `models/` define las entidades y sus tablas.
+- `controllers/errors.py` traduce las excepciones del servicio a respuestas HTTP.
+
+Las dependencias van de los controladores a los servicios, de ahí a los repositorios y finalmente a los modelos.
+
+Consulta [REGLAS.md](REGLAS.md) para ver las reglas de reservas y sus respuestas.
 
 ## API
 

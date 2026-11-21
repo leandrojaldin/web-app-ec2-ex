@@ -1,0 +1,15 @@
+.button {
+  font: inherit;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+}
+.button:hover { background: #29506f; }
+.button--small { padding: 4px 10px; font-size: 13px; }
+.button--danger { background: var(--danger); }
+.button--danger:hover { background: #8f2c24; }
+.button--success { background: #2f7d4f; }
+.button--secondary { background: #6b7280; }

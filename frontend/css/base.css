@@ -1,0 +1,14 @@
+:root {
+  --primary: #1d3b53;
+  --background: #f4f2ee;
+  --danger: #b3392f;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--background);
+  color: #1f2328;
+}
+.page__content { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }

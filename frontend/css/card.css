@@ -1,0 +1,10 @@
+.card {
+  background: #fff;
+  border: 1px solid #e2ded6;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+}
+.card__title { margin: 0 0 12px; font-size: 18px; }
+.card__header { display: flex; justify-content: space-between; align-items: center; }
