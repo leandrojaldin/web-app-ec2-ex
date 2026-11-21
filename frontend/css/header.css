@@ -1,0 +1,7 @@
+.header {
+  background: var(--primary);
+  color: #fff;
+  padding: 18px 24px 0;
+}
+.header__title { margin: 0; font-size: 24px; }
+.header__subtitle { margin: 2px 0 14px; color: #b9c9d6; font-size: 14px; }

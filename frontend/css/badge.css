@@ -1,0 +1,5 @@
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #eee; }
+.badge--available, .badge--confirmed { background: #e0efe6; color: #2f7d4f; }
+.badge--maintenance, .badge--cancelled { background: #f7e1df; color: var(--danger); }
+.badge--checked-in { background: #dde9f4; color: #1d5a8a; }
+.badge--checked-out { background: #ececec; color: #555; }

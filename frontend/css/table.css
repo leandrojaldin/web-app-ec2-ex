@@ -1,0 +1,5 @@
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table__heading, .table__cell { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee9e1; }
+.table__heading { color: #666; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+.table__action { margin: 2px 4px 2px 0; }
+.table__cell--empty { color: #888; text-align: center; padding: 16px; }
