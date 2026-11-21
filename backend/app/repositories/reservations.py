@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 from sqlalchemy import text
 
-from ..models import Reservation, db
+from ..models import Reservation, ReservationRate, db
 
 
 @contextmanager
@@ -49,10 +49,16 @@ def count_by_guest_and_status(guest_id, statuses):
     ).count()
 
 
-def create(**fields):
+def create(price_per_night, **fields):
     reservation = Reservation(**fields)
-    db.session.add(reservation)
+    rate = ReservationRate(reservation=reservation, price_per_night=price_per_night)
+    db.session.add_all([reservation, rate])
     return reservation
+
+
+def get_original_rate(reservation_id):
+    rate = db.session.get(ReservationRate, reservation_id)
+    return rate.price_per_night if rate is not None else None
 
 
 def update(reservation, **fields):

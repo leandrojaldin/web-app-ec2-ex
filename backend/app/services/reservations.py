@@ -1,5 +1,5 @@
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 
 from ..repositories import reservations
@@ -12,6 +12,7 @@ ACTIVE_STATUSES = ("confirmed", "checked_in")
 MAX_ACTIVE_RESERVATIONS = 3
 MIN_DISCOUNT_NIGHTS = 7
 LONG_STAY_DISCOUNT = Decimal("0.10")
+CANCELLATION_NOTICE = timedelta(hours=48)
 
 
 def hotel_now():
@@ -29,11 +30,15 @@ def get_reservation(reservation_id):
     return reservation
 
 
+def _round_price(price):
+    return float(price.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
 def _calculate_total(price_per_night, nights):
     total = Decimal(str(price_per_night)) * nights
     if nights >= MIN_DISCOUNT_NIGHTS:
         total *= 1 - LONG_STAY_DISCOUNT
-    return float(total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+    return _round_price(total)
 
 
 def create_reservation(data):
@@ -79,6 +84,7 @@ def create_reservation(data):
         return reservations.create(
             room=room, guest=guest, check_in=check_in, check_out=check_out,
             guests_count=guests_count, status="confirmed",
+            price_per_night=room.price_per_night,
             total_price=_calculate_total(room.price_per_night, nights),
         )
 
@@ -88,11 +94,28 @@ def _require_state(reservation, expected_status):
         raise BusinessRuleError("No se permite esta acción para el estado de la reserva")
 
 
+def _cancellation_fee(reservation):
+    arrival = datetime.combine(reservation.check_in, time.min, tzinfo=HOTEL_TIMEZONE)
+    if arrival - hotel_now() >= CANCELLATION_NOTICE:
+        return 0
+
+    original_rate = reservations.get_original_rate(reservation.id)
+    if original_rate is not None:
+        return _round_price(Decimal(str(original_rate)))
+
+    # Las reservas anteriores al cambio guardaban el total sin descuento.
+    nights = (reservation.check_out - reservation.check_in).days
+    if nights <= 0:
+        return 0
+    return _round_price(Decimal(str(reservation.total_price)) / nights)
+
+
 def cancel_reservation(reservation_id):
     with reservations.transaction():
         reservation = get_reservation(reservation_id)
         _require_state(reservation, "confirmed")
-        return reservations.update(reservation, status="cancelled")
+        fee = _cancellation_fee(reservation)
+        return reservations.update(reservation, status="cancelled", total_price=fee)
 
 
 def check_in_reservation(reservation_id):
